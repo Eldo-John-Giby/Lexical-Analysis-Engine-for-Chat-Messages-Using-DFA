@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #070A12;
+  --bg-surface: #0E1424;
+  --bg-surface-2: #141C33;
+  --border-main: #1F2A4A;
+  --text-main: #E6EAF5;
+  --text-muted: #8A94B2;
+  --accent-primary: #7C5CFF;
+  --accent-secondary: #22D3EE;
+  --color-success: #34D399;
+  --color-warn: #FBBF24;
+  --color-danger: #F87171;
+}
+
+.light {
+  --bg-main: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-surface-2: #F1F5F9;
+  --border-main: #CBD5E1;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --accent-primary: #6366F1;
+  --accent-secondary: #06B6D4;
+  --color-success: #10B981;
+  --color-warn: #D97706;
+  --color-danger: #EF4444;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-main);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(14, 20, 36, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Glowing accent effects */
+.glow-accent {
+  box-shadow: 0 0 20px -5px rgba(124, 92, 255, 0.4);
+}
+.glow-cyan {
+  box-shadow: 0 0 20px -5px rgba(34, 211, 238, 0.4);
+}
