@@ -1,4 +1,4 @@
-import { Interval, CharSet, AtomId } from './types';
+import { Interval, CharSet, AtomId, RegexNode } from './types';
 import {
   UNICODE_LETTER_RANGES,
   UNICODE_MARK_RANGES,
@@ -119,7 +119,6 @@ export function charSetContains(set: CharSet, cp: number): boolean {
   return false;
 }
 
-// Helper to build set from string characters
 export function stringCharsSet(chars: string): CharSet {
   const intervals: Interval[] = [];
   for (let i = 0; i < chars.length; ) {
@@ -136,13 +135,13 @@ export const CLASS_L = createCharSet(UNICODE_LETTER_RANGES);
 export const CLASS_M = createCharSet(UNICODE_MARK_RANGES);
 export const CLASS_D = charRangeSet('0', '9');
 export const CLASS_WS = createCharSet([
-  { lo: 0x20, hi: 0x20 }, // space
-  { lo: 0x09, hi: 0x09 }, // tab
-  { lo: 0x00a0, hi: 0x00a0 }, // non-breaking space
+  { lo: 0x20, hi: 0x20 },
+  { lo: 0x09, hi: 0x09 },
+  { lo: 0x00a0, hi: 0x00a0 },
 ]);
 export const CLASS_NL = createCharSet([
-  { lo: 0x0a, hi: 0x0a }, // \n
-  { lo: 0x0d, hi: 0x0d }, // \r
+  { lo: 0x0a, hi: 0x0a },
+  { lo: 0x0d, hi: 0x0d },
 ]);
 export const CLASS_CTRL = createCharSet([
   { lo: 0x00, hi: 0x08 },
@@ -162,18 +161,8 @@ export const CLASS_VS16 = singleCharSet(0xfe0f);
 export const CLASS_SKIN = charRangeSet(0x1f3fb, 0x1f3ff);
 export const CLASS_RI = charRangeSet(0x1f1e6, 0x1f1ff);
 export const CLASS_VIS = notCharSet(unionCharSets(CLASS_WS, CLASS_NL, CLASS_CTRL));
-
-// URLC: any char except whitespace, control, <, >, ", `
-export const CLASS_URLC = minusCharSets(
-  CLASS_VIS,
-  stringCharsSet('<>"`')
-);
-
-// URLE: URLC minus . , ! ? ; : ) ] ' * _ ~
-export const CLASS_URLE = minusCharSets(
-  CLASS_URLC,
-  stringCharsSet('.,!?;:)]\'*_~')
-);
+export const CLASS_URLC = minusCharSets(CLASS_VIS, stringCharsSet('<>"`'));
+export const CLASS_URLE = minusCharSets(CLASS_URLC, stringCharsSet('.,!?;:)]\'*_~'));
 
 export const NAMED_CLASSES: Record<string, CharSet> = {
   L: CLASS_L,
@@ -193,6 +182,35 @@ export const NAMED_CLASSES: Record<string, CharSet> = {
   VIS: CLASS_VIS,
 };
 
+// --- AST CharSet Extractor ---
+
+export function extractCharSetsFromAST(node: RegexNode): CharSet[] {
+  const sets: CharSet[] = [];
+  function walk(n: RegexNode) {
+    switch (n.t) {
+      case 'set':
+        sets.push(n.set);
+        break;
+      case 'cat':
+      case 'alt':
+        walk(n.a);
+        walk(n.b);
+        break;
+      case 'star':
+      case 'plus':
+      case 'opt':
+      case 'rep':
+        walk(n.a);
+        break;
+      case 'empty':
+      case 'eps':
+        break;
+    }
+  }
+  walk(node);
+  return sets;
+}
+
 // --- Atom Classifier System ---
 
 export interface Atom {
@@ -208,15 +226,13 @@ export interface Classifier {
   atomForChar: (ch: string) => AtomId;
   atomLabels: string[];
   asciiLookup: Uint16Array;
-  // All sorted contiguous intervals covering 0..MAX_CODE_POINT
   intervals: { lo: number; hi: number; atomId: AtomId }[];
 }
 
-/**
- * Builds the atom partition from a list of base CharSets.
- * Ensures the atoms partition 0..0x10FFFF completely and without overlap.
- */
-export function buildClassifier(classes: Record<string, CharSet>): Classifier {
+export function buildClassifier(
+  classes: Record<string, CharSet>,
+  additionalSets: CharSet[] = []
+): Classifier {
   // 1. Gather all cut boundaries
   const boundarySet = new Set<number>();
   boundarySet.add(0);
@@ -229,11 +245,17 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     }
   }
 
+  for (const set of additionalSets) {
+    for (const r of set.ranges) {
+      if (r.lo >= 0 && r.lo <= MAX_CODE_POINT + 1) boundarySet.add(r.lo);
+      if (r.hi + 1 >= 0 && r.hi + 1 <= MAX_CODE_POINT + 1) boundarySet.add(r.hi + 1);
+    }
+  }
+
   const boundaries = Array.from(boundarySet).sort((a, b) => a - b);
   const classEntries = Object.entries(classes);
 
   // 2. Compute signature for each elementary interval
-  // Signature maps to an integer atom ID
   const sigToAtomId = new Map<string, AtomId>();
   const atomIntervalsMap = new Map<AtomId, Interval[]>();
   const atomSigMap = new Map<AtomId, string>();
@@ -246,13 +268,18 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     const hi = boundaries[i + 1]! - 1;
     if (lo > hi) continue;
 
-    // Sample the midpoint to determine class membership
     const sample = lo;
     let sig = '';
+
     for (let c = 0; c < classEntries.length; c++) {
-      const isMember = charSetContains(classEntries[c]![1], sample);
-      if (isMember) {
-        sig += `${c},`;
+      if (charSetContains(classEntries[c]![1], sample)) {
+        sig += `c${c},`;
+      }
+    }
+
+    for (let s = 0; s < additionalSets.length; s++) {
+      if (charSetContains(additionalSets[s]!, sample)) {
+        sig += `s${s},`;
       }
     }
 
@@ -268,7 +295,7 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     elementaryIntervals.push({ lo, hi, atomId });
   }
 
-  // 3. Compact elementary intervals (merge adjacent intervals with same atomId)
+  // 3. Compact elementary intervals
   const mergedIntervals: { lo: number; hi: number; atomId: AtomId }[] = [];
   if (elementaryIntervals.length > 0) {
     let curr = { ...elementaryIntervals[0]! };
@@ -284,7 +311,7 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     mergedIntervals.push(curr);
   }
 
-  // 4. Precompute ASCII fast lookup array (0..255)
+  // 4. Precompute ASCII lookup
   const asciiLookup = new Uint16Array(256);
   let intervalIdx = 0;
   for (let cp = 0; cp < 256; cp++) {
@@ -297,7 +324,7 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     asciiLookup[cp] = mergedIntervals[intervalIdx]!.atomId;
   }
 
-  // 5. Binary search classification for code points >= 256
+  // 5. Binary search classify
   const classify = (cp: number): AtomId => {
     if (cp < 256) {
       return asciiLookup[cp]!;
@@ -316,7 +343,7 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
         low = mid + 1;
       }
     }
-    return 0; // fallback (should never occur since 0..MAX_CODE_POINT is partitioned)
+    return 0;
   };
 
   const atomForChar = (ch: string): AtomId => {
@@ -324,7 +351,7 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     return cp !== undefined ? classify(cp) : 0;
   };
 
-  // 6. Build human-readable atom labels
+  // 6. Build labels
   const atoms: Atom[] = [];
   const atomLabels: string[] = [];
 
@@ -332,15 +359,14 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     const rawIntervals = atomIntervalsMap.get(aId) || [];
     const charSet = createCharSet(rawIntervals);
 
-    // Determine representative label
     let label = `atom_${aId}`;
     const sig = atomSigMap.get(aId) || '';
+
     const classIndices = sig
       .split(',')
-      .filter(Boolean)
-      .map((s) => parseInt(s, 10));
+      .filter((s) => s.startsWith('c'))
+      .map((s) => parseInt(s.slice(1), 10));
 
-    // Priority ordering for labels
     const priorityOrder = ['ZWJ', 'VS16', 'SKIN', 'RI', 'EP', 'D', 'NL', 'WS', 'CTRL', 'L', 'M', 'ID', 'URLE', 'URLC', 'VIS'];
     let namedLabel: string | null = null;
     if (classIndices.length > 0) {
@@ -389,4 +415,9 @@ export function buildClassifier(classes: Record<string, CharSet>): Classifier {
     asciiLookup,
     intervals: mergedIntervals,
   };
+}
+
+export function buildClassifierForAST(node: RegexNode): Classifier {
+  const sets = extractCharSetsFromAST(node);
+  return buildClassifier(NAMED_CLASSES, sets);
 }
