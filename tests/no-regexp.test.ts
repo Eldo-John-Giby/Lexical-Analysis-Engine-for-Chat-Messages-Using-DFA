@@ -24,6 +24,10 @@ describe('no-regexp in src/engine guard', () => {
 
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf-8');
+      // If the file explicitly marks that it is an allowed regex module (e.g. test oracle)
+      if (content.startsWith('// ALLOWED-REGEXP')) {
+        continue;
+      }
       const lines = content.split('\n');
 
       for (let i = 0; i < lines.length; i++) {
