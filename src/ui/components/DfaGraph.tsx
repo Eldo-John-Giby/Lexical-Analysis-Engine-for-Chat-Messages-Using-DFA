@@ -13,6 +13,7 @@ interface DfaGraphProps {
   ruleColor?: string;
   onSelectState?: (stateId: number | null) => void;
   activeStateId?: number | null;
+  activeEdge?: { from: number; to: number } | null;
 }
 
 export const DfaGraph: React.FC<DfaGraphProps> = ({
@@ -22,6 +23,7 @@ export const DfaGraph: React.FC<DfaGraphProps> = ({
   ruleColor = '#7C5CFF',
   onSelectState,
   activeStateId,
+  activeEdge,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
@@ -163,6 +165,15 @@ export const DfaGraph: React.FC<DfaGraphProps> = ({
           },
         },
         {
+          selector: '.active-edge',
+          style: {
+            'line-color': '#34D399',
+            'target-arrow-color': '#34D399',
+            width: 3.5,
+            'z-index': 99,
+          },
+        },
+        {
           selector: '.dimmed',
           style: {
             opacity: 0.15,
@@ -211,6 +222,16 @@ export const DfaGraph: React.FC<DfaGraphProps> = ({
       cy.nodes(`[stateId = ${activeStateId}]`).addClass('highlighted');
     }
   }, [activeStateId]);
+
+  // Update active transition edge highlight
+  useEffect(() => {
+    if (!cyRef.current) return;
+    const cy = cyRef.current;
+    cy.edges().removeClass('active-edge');
+    if (activeEdge) {
+      cy.edges(`[source = "q${activeEdge.from}"][target = "q${activeEdge.to}"]`).addClass('active-edge');
+    }
+  }, [activeEdge]);
 
   const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
   const handleZoomOut = () => cyRef.current?.zoom(cyRef.current.zoom() * 0.8);

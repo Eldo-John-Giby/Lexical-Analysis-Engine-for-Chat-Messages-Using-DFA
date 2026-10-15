@@ -4,6 +4,7 @@ import { parseRegex, RegexParseError } from '../../engine/regex/parser';
 import { buildThompsonNFA } from '../../engine/nfa/thompson';
 import { subsetConstruction } from '../../engine/dfa/subset';
 import { minimizeMoore } from '../../engine/dfa/minimize-moore';
+import { minimizeHopcroft } from '../../engine/dfa/minimize-hopcroft';
 import { simulateNFA } from '../../engine/nfa/simulate';
 import { matchFull } from '../../engine/dfa/table';
 import { buildClassifierForAST } from '../../engine/charclass';
@@ -35,6 +36,7 @@ export const ConstructionLabPage: React.FC = () => {
       const { nfa, logs: thompsonLogs } = buildThompsonNFA(ast, classifier, 0);
       const { dfa: rawDfa, logs: subsetLogs } = subsetConstruction(nfa, classifier.numAtoms);
       const { dfa: minDfa, rounds: mooreRounds } = minimizeMoore(rawDfa);
+      const hopcroftDfa = minimizeHopcroft(rawDfa);
 
       return {
         ast,
@@ -44,6 +46,7 @@ export const ConstructionLabPage: React.FC = () => {
         rawDfa,
         subsetLogs,
         minDfa,
+        hopcroftDfa,
         mooreRounds,
         error: null,
       };
@@ -56,6 +59,7 @@ export const ConstructionLabPage: React.FC = () => {
         rawDfa: null,
         subsetLogs: [],
         minDfa: null,
+        hopcroftDfa: null,
         mooreRounds: [],
         error: e.message || 'Invalid regular expression',
       };
@@ -277,13 +281,13 @@ export const ConstructionLabPage: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 4: Moore Minimization */}
+          {/* STEP 4: Moore Minimization & State-Count Comparison */}
           {activeStep === 4 && pipeline.mooreRounds && (
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#1F2A4A]">
                 <div>
                   <h3 className="text-sm font-bold text-[#E6EAF5]">
-                    Moore Partition Refinement ({pipeline.rawDfa?.numStates} &rarr; {pipeline.minDfa?.numStates} States)
+                    DFA Minimization & State-Count Comparison (Moore vs Hopcroft)
                   </h3>
                   <p className="text-xs text-[#8A94B2] mt-0.5">
                     Refines state equivalence classes round-by-round until distinguishable partitions stabilize.
@@ -292,6 +296,29 @@ export const ConstructionLabPage: React.FC = () => {
                 <span className="text-xs font-mono text-[#34D399] bg-[#141C33] px-2.5 py-1 rounded-lg border border-[#1F2A4A]">
                   Reduction: {pipeline.rawDfa?.numStates} &rarr; {pipeline.minDfa?.numStates} minimal states
                 </span>
+              </div>
+
+              {/* State Count Comparison Card */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 bg-[#141C33]/60 border border-[#1F2A4A] rounded-xl text-center">
+                  <div className="text-[11px] text-[#8A94B2]">Subset Raw DFA</div>
+                  <div className="text-lg font-bold text-[#FBBF24] mt-0.5">{pipeline.rawDfa?.numStates} States</div>
+                  <div className="text-[10px] text-[#8A94B2]">Unminimized Machine</div>
+                </div>
+
+                <div className="p-3 bg-[#141C33]/60 border border-[#1F2A4A] rounded-xl text-center">
+                  <div className="text-[11px] text-[#8A94B2]">Moore Algorithm (O(|&Sigma;| n&sup2;))</div>
+                  <div className="text-lg font-bold text-[#34D399] mt-0.5">{pipeline.minDfa?.numStates} States</div>
+                  <div className="text-[10px] text-[#34D399]">{pipeline.mooreRounds.length} Partition Rounds</div>
+                </div>
+
+                <div className="p-3 bg-[#141C33]/60 border border-[#1F2A4A] rounded-xl text-center">
+                  <div className="text-[11px] text-[#8A94B2]">Hopcroft Algorithm (O(|&Sigma;| n log n))</div>
+                  <div className="text-lg font-bold text-[#22D3EE] mt-0.5">{pipeline.hopcroftDfa?.numStates} States</div>
+                  <div className="text-[10px] text-[#22D3EE]">
+                    {pipeline.minDfa?.numStates === pipeline.hopcroftDfa?.numStates ? 'Canonical Isomorphism Verified' : 'Equivalence Mismatch'}
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-3 max-h-[380px] overflow-y-auto">

@@ -8,7 +8,7 @@ import { SymbolTablePanel } from '../components/SymbolTablePanel';
 import { ErrorsPanel } from '../components/ErrorsPanel';
 import { RenderedPreview } from '../components/RenderedPreview';
 import { TracePlayer } from '../components/TracePlayer';
-import { Sparkles, Dices, Layers, Table2, Database, AlertCircle } from 'lucide-react';
+import { Sparkles, Dices, Layers, Table2, Database, AlertCircle, Sliders } from 'lucide-react';
 
 export const PlaygroundPage: React.FC = () => {
   const {
@@ -17,6 +17,7 @@ export const PlaygroundPage: React.FC = () => {
     setPlaygroundText,
     isTraceDockOpen,
     setTraceDockOpen,
+    setRuleModalOpen,
   } = useAppStore();
 
   const [activeRightTab, setActiveRightTab] = useState<'table' | 'symbols' | 'preview' | 'errors'>('table');
@@ -60,6 +61,14 @@ export const PlaygroundPage: React.FC = () => {
           >
             <Dices className="w-3.5 h-3.5 text-[#22D3EE]" />
             <span>Randomize Message</span>
+          </button>
+
+          <button
+            onClick={() => setRuleModalOpen(true)}
+            className="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-[#141C33] hover:bg-[#1F2A4A] border border-[#1F2A4A] text-[#A78BFA] hover:text-[#E6EAF5] transition-colors"
+          >
+            <Sliders className="w-3.5 h-3.5 text-[#A78BFA]" />
+            <span>Configure Rules</span>
           </button>
 
           <button

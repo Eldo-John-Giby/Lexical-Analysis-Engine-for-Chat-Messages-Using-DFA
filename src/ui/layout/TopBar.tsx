@@ -1,9 +1,9 @@
 import React from 'react';
 import { useAppStore } from '../../state/store';
-import { Sun, Moon, Command, HelpCircle, Activity } from 'lucide-react';
+import { Sun, Moon, Command, HelpCircle, Activity, Sliders } from 'lucide-react';
 
 export const TopBar: React.FC = () => {
-  const { theme, toggleTheme, setCommandPaletteOpen, setShortcutsOpen, engine } = useAppStore();
+  const { theme, toggleTheme, setCommandPaletteOpen, setShortcutsOpen, setRuleModalOpen, engine } = useAppStore();
   const stats = engine.stats;
   const statsText = `Engine ready: ${stats.perRule.length} rules, ${stats.master.minDfaStates} DFA states, built in ${stats.buildMs} ms`;
 
@@ -32,6 +32,14 @@ export const TopBar: React.FC = () => {
 
       {/* Right controls */}
       <div className="flex items-center space-x-2">
+        <button
+          onClick={() => setRuleModalOpen(true)}
+          className="flex items-center space-x-1.5 text-xs bg-[#141C33] hover:bg-[#1F2A4A] border border-[#1F2A4A] text-[#E6EAF5] px-2.5 py-1.5 rounded-lg transition-colors"
+          title="Configure Token Rules"
+        >
+          <Sliders className="w-3.5 h-3.5 text-[#A78BFA]" />
+          <span className="font-medium">Configure Rules</span>
+        </button>
         <button
           onClick={() => setCommandPaletteOpen(true)}
           className="flex items-center space-x-1.5 text-xs bg-[#141C33] hover:bg-[#1F2A4A] border border-[#1F2A4A] text-[#8A94B2] hover:text-[#E6EAF5] px-2.5 py-1.5 rounded-lg transition-colors"

@@ -4,6 +4,7 @@ import { TopBar } from './layout/TopBar';
 import { TabNav } from './layout/TabNav';
 import { CommandPalette } from './layout/CommandPalette';
 import { ShortcutsModal } from './layout/ShortcutsModal';
+import { RuleManagerModal } from './components/RuleManagerModal';
 import { PlaygroundPage } from './pages/PlaygroundPage';
 import { ExplorerPage } from './pages/ExplorerPage';
 import { ConstructionLabPage } from './pages/ConstructionLabPage';
@@ -14,7 +15,7 @@ import { TheoryPage } from './pages/TheoryPage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const App: React.FC = () => {
-  const { currentTab, setCurrentTab, setShortcutsOpen } = useAppStore();
+  const { currentTab, setCurrentTab, setShortcutsOpen, isRuleModalOpen, setRuleModalOpen } = useAppStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,6 +76,7 @@ export const App: React.FC = () => {
 
       <CommandPalette />
       <ShortcutsModal />
+      <RuleManagerModal isOpen={isRuleModalOpen} onClose={() => setRuleModalOpen(false)} />
     </div>
   );
 };

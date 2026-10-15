@@ -20,6 +20,8 @@ interface AppState {
   setCommandPaletteOpen: (open: boolean) => void;
   isShortcutsOpen: boolean;
   setShortcutsOpen: (open: boolean) => void;
+  isRuleModalOpen: boolean;
+  setRuleModalOpen: (open: boolean) => void;
 
   // Engine instance & rules
   engine: Engine;
@@ -72,6 +74,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
   isShortcutsOpen: false,
   setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
+  isRuleModalOpen: false,
+  setRuleModalOpen: (open) => set({ isRuleModalOpen: open }),
 
   engine: defaultEngine,
   rules: DEFAULT_RULES,
