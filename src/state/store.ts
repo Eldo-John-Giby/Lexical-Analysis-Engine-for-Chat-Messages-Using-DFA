@@ -1,12 +1,14 @@
 import { create } from 'zustand';
+import { buildEngine, Engine, LexResult, Token, RuleDef, DEFAULT_RULES } from '../engine/index';
+import { PRESETS } from '../data/presets';
 
-export type TabType = 
-  | 'playground' 
-  | 'explorer' 
-  | 'construction' 
-  | 'chat' 
-  | 'analytics' 
-  | 'benchmarks' 
+export type TabType =
+  | 'playground'
+  | 'explorer'
+  | 'construction'
+  | 'chat'
+  | 'analytics'
+  | 'benchmarks'
   | 'theory';
 
 interface AppState {
@@ -18,13 +20,37 @@ interface AppState {
   setCommandPaletteOpen: (open: boolean) => void;
   isShortcutsOpen: boolean;
   setShortcutsOpen: (open: boolean) => void;
+
+  // Engine instance & rules
+  engine: Engine;
+  rules: RuleDef[];
+  rebuildEngineWithRules: (newRules: RuleDef[]) => void;
+
+  // Playground state
   playgroundText: string;
   setPlaygroundText: (text: string) => void;
+  lexResult: LexResult;
   selectedTokenIndex: number | null;
   setSelectedTokenIndex: (index: number | null) => void;
+  isTraceDockOpen: boolean;
+  setTraceDockOpen: (open: boolean) => void;
+  activePresetId: string;
+  loadPreset: (id: string) => void;
+
+  // Trace player state
+  currentTraceEventIndex: number;
+  setCurrentTraceEventIndex: (index: number) => void;
+  traceSpeed: number;
+  setTraceSpeed: (speed: number) => void;
+  isPlayingTrace: boolean;
+  setIsPlayingTrace: (playing: boolean) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+const defaultEngine = buildEngine(DEFAULT_RULES);
+const initialText = 'hey @eldo check https://vit.ac.in/x. now!!! meet at 5:30pm tmrw loooool :) <3 #ProjectDay2026';
+const initialResult = defaultEngine.lex(initialText, { trace: true });
+
+export const useAppStore = create<AppState>((set, get) => ({
   currentTab: 'playground',
   setCurrentTab: (tab) => set({ currentTab: tab }),
   theme: 'dark',
@@ -46,8 +72,70 @@ export const useAppStore = create<AppState>((set) => ({
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
   isShortcutsOpen: false,
   setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
-  playgroundText: 'hey @eldo check https://vit.ac.in/x. now!!! meet at 5:30pm tmrw loooool :) <3 #ProjectDay2026',
-  setPlaygroundText: (text) => set({ playgroundText: text, selectedTokenIndex: null }),
+
+  engine: defaultEngine,
+  rules: DEFAULT_RULES,
+  rebuildEngineWithRules: (newRules) => {
+    try {
+      const newEngine = buildEngine(newRules);
+      const text = get().playgroundText;
+      const res = newEngine.lex(text, { trace: true });
+      set({
+        engine: newEngine,
+        rules: newRules,
+        lexResult: res,
+        selectedTokenIndex: null,
+        currentTraceEventIndex: 0,
+      });
+    } catch (e) {
+      console.error('Failed to rebuild engine with rules:', e);
+    }
+  },
+
+  playgroundText: initialText,
+  setPlaygroundText: (text) => {
+    const { engine } = get();
+    const res = engine.lex(text, { trace: true });
+    set({
+      playgroundText: text,
+      lexResult: res,
+      selectedTokenIndex: null,
+      currentTraceEventIndex: 0,
+      isPlayingTrace: false,
+    });
+  },
+  lexResult: initialResult,
   selectedTokenIndex: null,
-  setSelectedTokenIndex: (index) => set({ selectedTokenIndex: index }),
+  setSelectedTokenIndex: (index) => {
+    set({ selectedTokenIndex: index });
+    if (index !== null) {
+      // Find beginning trace event for this token
+      const token = get().lexResult.tokens[index];
+      if (token && get().lexResult.trace) {
+        const evIdx = get().lexResult.trace!.findIndex(
+          (e) => e.t === 'begin' && e.pos === token.start
+        );
+        if (evIdx !== -1) {
+          set({ currentTraceEventIndex: evIdx });
+        }
+      }
+    }
+  },
+  isTraceDockOpen: true,
+  setTraceDockOpen: (open) => set({ isTraceDockOpen: open }),
+  activePresetId: 'hackathon',
+  loadPreset: (id) => {
+    const preset = PRESETS.find((p) => p.id === id);
+    if (preset) {
+      get().setPlaygroundText(preset.text);
+      set({ activePresetId: id });
+    }
+  },
+
+  currentTraceEventIndex: 0,
+  setCurrentTraceEventIndex: (index) => set({ currentTraceEventIndex: index }),
+  traceSpeed: 1,
+  setTraceSpeed: (speed) => set({ traceSpeed: speed }),
+  isPlayingTrace: false,
+  setIsPlayingTrace: (playing) => set({ isPlayingTrace: playing }),
 }));

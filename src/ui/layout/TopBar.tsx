@@ -2,12 +2,10 @@ import React from 'react';
 import { useAppStore } from '../../state/store';
 import { Sun, Moon, Command, HelpCircle, Activity } from 'lucide-react';
 
-interface TopBarProps {
-  statsText?: string;
-}
-
-export const TopBar: React.FC<TopBarProps> = ({ statsText = "Engine initializing..." }) => {
-  const { theme, toggleTheme, setCommandPaletteOpen, setShortcutsOpen } = useAppStore();
+export const TopBar: React.FC = () => {
+  const { theme, toggleTheme, setCommandPaletteOpen, setShortcutsOpen, engine } = useAppStore();
+  const stats = engine.stats;
+  const statsText = `Engine ready: ${stats.perRule.length} rules, ${stats.master.minDfaStates} DFA states, built in ${stats.buildMs} ms`;
 
   return (
     <header className="h-14 border-b border-[#1F2A4A] bg-[#0E1424]/90 backdrop-blur px-4 flex items-center justify-between sticky top-0 z-40">
