@@ -18,7 +18,7 @@
 4. [The 29 Token Grammar Rules](#the-29-token-grammar-rules)
 5. [Alphabet Partitioning (1.1M Unicode ➔ 74 Atoms)](#alphabet-partitioning-11m-unicode--74-atoms)
 6. [DFA Minimization: Moore vs Hopcroft](#dfa-minimization-moore-vs-hopcroft)
-7. [The 7 Interactive Application Modules](#the-7-interactive-application-modules)
+7. [The 4 Core Interactive Application Modules](#the-4-core-interactive-application-modules)
 8. [CLI Usage](#cli-usage)
 9. [ReDoS Immunity & Benchmarks](#redos-immunity--benchmarks)
 10. [Quick Start & Installation](#quick-start--installation)
@@ -217,14 +217,13 @@ Master Unified DFA    : 172 Raw DFA States  ──► 137 Minimized States  (-20
 
 ---
 
-## The 7 Interactive Application Modules
+## The 4 Core Interactive Application Modules
 
 The web dashboard is designed for pairs, evaluators, and students to explore compiler theory interactively:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│  [1] Playground   [2] Explorer   [3] Construction   [4] Chat   [5] Analytics    │
-│  [6] Benchmarks   [7] Theory     [Configure Rules]   [Theme]   [Cmd/Ctrl+K]     │
+│  [1] Playground   [2] Explorer   [3] Construction   [4] Benchmarks     [Theme]   │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -235,29 +234,19 @@ The web dashboard is designed for pairs, evaluators, and students to explore com
    * **Diagnostics Panel** demonstrating panic-mode recovery on malformed input.
    * **Trace Player Dock:** Scrubbable character tape showing transitions, mark checkpoints, and backtracking rollbacks.
 2. **DFA Explorer (`Key 2`):**
-   * Cytoscape graph rendering any of the 29 rule DFAs, the toy elongation machine, or the Master DFA.
+   * Cytoscape graph rendering any of the 29 rule DFAs or the Master DFA.
    * **Interactive String Simulation:** Type any string and watch the machine animate state-by-state with glowing transition edges and character tape highlighting.
-   * Full transition matrix inspector and 2-hop neighborhood focus mode.
+   * Full transition matrix inspector and state inspector.
 3. **Construction Lab (`Key 3`):**
-   * 5-stage educational pipeline for any custom regex (e.g. `(a|b)*abb`):
+   * 5-stage formal compiler pipeline for any custom regex (e.g. `(a|b)*abb`):
      1. Abstract Syntax Tree (AST) tree view
      2. Thompson NFA transition log
      3. Subset Construction worklist table
      4. Moore Partition Refinement stepper with round-by-round split logs
      5. Dual NFA vs DFA simulation proving language equivalence
-4. **Chat Simulator (`Key 4`):**
-   * WhatsApp/Discord-style chat simulation with realistic conversation threads.
-   * **X-Ray Mode:** Reveals raw tokens, classification categories, and sub-millisecond lexing latency per message.
-   * Heuristic Phishing Detector scoring suspicious URLs (IP hosts, extreme path length, urgent alert flags).
-5. **Analytics (`Key 5`):**
-   * Recharts donut and bar charts showing token distribution (Entity vs Emotive vs Numeric vs Text).
-   * One-click Markdown report generator detailing total characters, word counts, and lexer execution time.
-6. **Benchmarks (`Key 6`):**
+4. **Benchmarks (`Key 4`):**
    * **ReDoS Showdown:** Visual chart proving flat $\mathcal{O}(n)$ execution of DFA vs exponential explosion of native regex on `(a+)+`.
-   * **10,000-Message Showdown:** Direct head-to-head comparison against native `RegExp` tokenizer on real chat logs.
    * **Moore vs Hopcroft Minimization Comparison:** Compares microsecond runtimes and verifies canonical state equivalence.
-7. **Theory (`Key 7`):**
-   * Syllabus reference definitions: Chomsky Hierarchy, Formal 5-tuple specification, Myhill-Nerode Theorem, and complexity comparison tables.
 
 ---
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppStore, TabType } from '../../state/store';
-import { Code2, Network, GitBranch, MessageSquare, BarChart3, Zap, BookOpen } from 'lucide-react';
+import { Code2, Network, GitBranch, Zap } from 'lucide-react';
 
 interface TabItem {
   id: TabType;
@@ -13,10 +13,7 @@ const TABS: TabItem[] = [
   { id: 'playground', label: 'Playground', icon: Code2, keyNumber: '1' },
   { id: 'explorer', label: 'Automata Explorer', icon: Network, keyNumber: '2' },
   { id: 'construction', label: 'Construction Lab', icon: GitBranch, keyNumber: '3' },
-  { id: 'chat', label: 'Chat Simulator', icon: MessageSquare, keyNumber: '4' },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3, keyNumber: '5' },
-  { id: 'benchmarks', label: 'Benchmarks', icon: Zap, keyNumber: '6' },
-  { id: 'theory', label: 'Theory', icon: BookOpen, keyNumber: '7' },
+  { id: 'benchmarks', label: 'Benchmarks', icon: Zap, keyNumber: '4' },
 ];
 
 export const TabNav: React.FC = () => {

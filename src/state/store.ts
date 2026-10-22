@@ -1,32 +1,22 @@
 import { create } from 'zustand';
-import { buildEngine, Engine, LexResult, Token, RuleDef, DEFAULT_RULES } from '../engine/index';
+import { buildEngine, Engine, LexResult, RuleDef, DEFAULT_RULES } from '../engine/index';
 import { PRESETS } from '../data/presets';
 
 export type TabType =
   | 'playground'
   | 'explorer'
   | 'construction'
-  | 'chat'
-  | 'analytics'
-  | 'benchmarks'
-  | 'theory';
+  | 'benchmarks';
 
 interface AppState {
   currentTab: TabType;
   setCurrentTab: (tab: TabType) => void;
   theme: 'dark' | 'light';
   toggleTheme: () => void;
-  isCommandPaletteOpen: boolean;
-  setCommandPaletteOpen: (open: boolean) => void;
-  isShortcutsOpen: boolean;
-  setShortcutsOpen: (open: boolean) => void;
-  isRuleModalOpen: boolean;
-  setRuleModalOpen: (open: boolean) => void;
 
   // Engine instance & rules
   engine: Engine;
   rules: RuleDef[];
-  rebuildEngineWithRules: (newRules: RuleDef[]) => void;
 
   // Playground state
   playgroundText: string;
@@ -70,31 +60,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       return { theme: nextTheme };
     }),
-  isCommandPaletteOpen: false,
-  setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
-  isShortcutsOpen: false,
-  setShortcutsOpen: (open) => set({ isShortcutsOpen: open }),
-  isRuleModalOpen: false,
-  setRuleModalOpen: (open) => set({ isRuleModalOpen: open }),
 
   engine: defaultEngine,
   rules: DEFAULT_RULES,
-  rebuildEngineWithRules: (newRules) => {
-    try {
-      const newEngine = buildEngine(newRules);
-      const text = get().playgroundText;
-      const res = newEngine.lex(text, { trace: true });
-      set({
-        engine: newEngine,
-        rules: newRules,
-        lexResult: res,
-        selectedTokenIndex: null,
-        currentTraceEventIndex: 0,
-      });
-    } catch (e) {
-      console.error('Failed to rebuild engine with rules:', e);
-    }
-  },
 
   playgroundText: initialText,
   setPlaygroundText: (text) => {

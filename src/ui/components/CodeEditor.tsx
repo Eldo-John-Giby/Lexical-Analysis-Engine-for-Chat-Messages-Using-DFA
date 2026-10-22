@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useAppStore } from '../../state/store';
-import { Token } from '../../engine/types';
 
 export const CodeEditor: React.FC = () => {
   const {
@@ -11,12 +10,6 @@ export const CodeEditor: React.FC = () => {
     setSelectedTokenIndex,
     engine,
   } = useAppStore();
-
-  const [hoveredToken, setHoveredToken] = useState<{
-    token: Token;
-    x: number;
-    y: number;
-  } | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

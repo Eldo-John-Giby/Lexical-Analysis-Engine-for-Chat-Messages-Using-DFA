@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import { DFA } from '../../engine/types';
-import { ZoomIn, ZoomOut, Maximize2, Download, Eye, Sparkles } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Download, Eye } from 'lucide-react';
 
 cytoscape.use(dagre);
 
@@ -28,7 +28,6 @@ export const DfaGraph: React.FC<DfaGraphProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [focusMode, setFocusMode] = useState(false);
-  const [focusedState, setFocusedState] = useState<number | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -186,7 +185,6 @@ export const DfaGraph: React.FC<DfaGraphProps> = ({
     cy.on('tap', 'node', (evt) => {
       const node = evt.target;
       const sId = node.data('stateId');
-      setFocusedState(sId);
       if (onSelectState) onSelectState(sId);
 
       if (focusMode) {
@@ -201,7 +199,6 @@ export const DfaGraph: React.FC<DfaGraphProps> = ({
     cy.on('tap', (evt) => {
       if (evt.target === cy) {
         cy.elements().removeClass('dimmed');
-        setFocusedState(null);
         if (onSelectState) onSelectState(null);
       }
     });

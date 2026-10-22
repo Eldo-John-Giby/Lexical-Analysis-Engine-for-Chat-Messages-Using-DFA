@@ -21,7 +21,6 @@ export const TokenChips: React.FC = () => {
           const isSelected = selectedTokenIndex === idx;
           const rule = rulesMap.get(token.type);
           const color = rule?.color || '#94A3B8';
-          const isError = token.kind === 'ERROR';
 
           return (
             <motion.button

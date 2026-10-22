@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '../../state/store';
-import { Search, Download, Copy, Check } from 'lucide-react';
+import { Search, Copy, Check } from 'lucide-react';
 
 export const TokenTable: React.FC = () => {
   const { lexResult, selectedTokenIndex, setSelectedTokenIndex, engine } = useAppStore();
@@ -30,25 +30,6 @@ export const TokenTable: React.FC = () => {
 
   const copyAsJson = () => {
     navigator.clipboard.writeText(JSON.stringify(lexResult.tokens, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const copyAsCsv = () => {
-    const headers = ['Index', 'Type', 'Kind', 'Lexeme', 'Start', 'End', 'Line', 'Col', 'Flags'];
-    const rows = lexResult.tokens.map((t, i) => [
-      i + 1,
-      t.type,
-      t.kind,
-      JSON.stringify(t.lexeme),
-      t.start,
-      t.end,
-      t.line,
-      t.col,
-      JSON.stringify(t.flags.join('; ')),
-    ]);
-    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    navigator.clipboard.writeText(csv);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -85,19 +66,11 @@ export const TokenTable: React.FC = () => {
         <div className="flex items-center space-x-1.5">
           <button
             onClick={copyAsJson}
-            className="flex items-center space-x-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#0E1424] hover:bg-[#1F2A4A] border border-[#1F2A4A] text-[#8A94B2] hover:text-[#E6EAF5] transition-colors"
-            title="Copy as JSON"
+            className="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-[#0E1424] hover:bg-[#1F2A4A] border border-[#1F2A4A] text-[#8A94B2] hover:text-[#E6EAF5] transition-colors"
+            title="Copy tokens as JSON"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-[#34D399]" /> : <Copy className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">JSON</span>
-          </button>
-          <button
-            onClick={copyAsCsv}
-            className="flex items-center space-x-1 text-xs px-2.5 py-1.5 rounded-lg bg-[#0E1424] hover:bg-[#1F2A4A] border border-[#1F2A4A] text-[#8A94B2] hover:text-[#E6EAF5] transition-colors"
-            title="Copy as CSV"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">CSV</span>
+            <span>Copy Tokens</span>
           </button>
         </div>
       </div>

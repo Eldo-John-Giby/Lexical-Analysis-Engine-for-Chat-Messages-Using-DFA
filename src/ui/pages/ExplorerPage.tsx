@@ -2,14 +2,11 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAppStore } from '../../state/store';
 import { DfaGraph } from '../components/DfaGraph';
 import { TransitionTable } from '../components/TransitionTable';
-import { buildToyElongationDFA } from '../../engine/lexer/postprocess';
 import {
   Network,
   Table,
   Layers,
-  Cpu,
   Zap,
-  HardDrive,
   FileCode,
   Search,
   Play,
@@ -20,7 +17,6 @@ import {
   Sparkles,
   CheckCircle2,
   XCircle,
-  FastForward,
 } from 'lucide-react';
 
 export const ExplorerPage: React.FC = () => {
@@ -30,16 +26,13 @@ export const ExplorerPage: React.FC = () => {
   const [selectedStateId, setSelectedStateId] = useState<number | null>(null);
   const [searchStateText, setSearchStateText] = useState<string>('');
 
-  const toyElongationDfa = useMemo(() => buildToyElongationDFA(), []);
-
   // Compute active DFA based on selection
-  const { currentDfa, currentTitle, currentColor, currentRuleId } = useMemo(() => {
+  const { currentDfa, currentTitle, currentColor } = useMemo(() => {
     if (selectedTarget === 'master') {
       return {
         currentDfa: engine.dfaNormal,
         currentTitle: 'Master DFA (Standard Lexing)',
         currentColor: '#7C5CFF',
-        currentRuleId: null,
       };
     }
     if (selectedTarget === 'master-linestart') {
@@ -47,15 +40,6 @@ export const ExplorerPage: React.FC = () => {
         currentDfa: engine.dfaLineStart,
         currentTitle: 'Master DFA (Line-Start Active with COMMAND)',
         currentColor: '#F472B6',
-        currentRuleId: null,
-      };
-    }
-    if (selectedTarget === 'toy-elongation') {
-      return {
-        currentDfa: toyElongationDfa,
-        currentTitle: 'Elongation Detection Toy DFA (3+ repeats)',
-        currentColor: '#FBBF24',
-        currentRuleId: null,
       };
     }
     const rId = parseInt(selectedTarget, 10);
@@ -64,9 +48,8 @@ export const ExplorerPage: React.FC = () => {
       currentDfa: engine.dfaFor(rule.id),
       currentTitle: `Rule #${rule.id + 1}: ${rule.name}`,
       currentColor: rule.color,
-      currentRuleId: rule.id,
     };
-  }, [selectedTarget, engine, toyElongationDfa]);
+  }, [selectedTarget, engine]);
 
   // Edges count
   const edgeCount = useMemo(() => {
@@ -88,7 +71,6 @@ export const ExplorerPage: React.FC = () => {
     '4': '@eldo',
     '8': '5:30pm',
     '9': '🔥',
-    'toy-elongation': 'aaabbc',
     'master': 'hey @eldo 5:30pm',
   };
 
@@ -134,20 +116,9 @@ export const ExplorerPage: React.FC = () => {
 
     for (let i = 0; i < simInput.length; i++) {
       const ch = simInput[i]!;
-      let atom = -1;
-      let atomLabel = ch;
-
-      if (selectedTarget === 'toy-elongation') {
-        if (ch === 'a') atom = 0;
-        else if (ch === 'b') atom = 1;
-        else if (ch === 'c') atom = 2;
-        else atom = 3;
-        atomLabel = ch;
-      } else {
-        const cp = ch.codePointAt(0) ?? 0;
-        atom = engine.classifier.classify(cp);
-        atomLabel = engine.classifier.atomLabels[atom] || ch;
-      }
+      const cp = ch.codePointAt(0) ?? 0;
+      const atom = engine.classifier.classify(cp);
+      const atomLabel = engine.classifier.atomLabels[atom] || ch;
 
       if (currState === -1) {
         steps.push({
@@ -185,7 +156,7 @@ export const ExplorerPage: React.FC = () => {
     }
 
     return steps;
-  }, [currentDfa, engine.classifier, selectedTarget, simInput]);
+  }, [currentDfa, engine.classifier, simInput]);
 
   // Auto-play timer
   useEffect(() => {
@@ -233,12 +204,9 @@ export const ExplorerPage: React.FC = () => {
             }}
             className="bg-[#141C33] border border-[#1F2A4A] text-xs text-[#E6EAF5] rounded-lg px-3 py-1.5 outline-none focus:border-[#7C5CFF]"
           >
-            <optgroup label="Compiled Master Automata">
-              <option value="master">Master DFA (All Normal Rules)</option>
+            <optgroup label="Unified Master DFA">
+              <option value="master">Master DFA (All Standard Rules)</option>
               <option value="master-linestart">Master DFA (Line-Start Rules)</option>
-            </optgroup>
-            <optgroup label="Specialized Machines">
-              <option value="toy-elongation">Elongation Toy DFA ({'{a,b,c,other}'})</option>
             </optgroup>
             <optgroup label="Token Rule DFAs (29 Rules)">
               {engine.rules.map((r) => (
@@ -297,7 +265,7 @@ export const ExplorerPage: React.FC = () => {
       </div>
 
       {/* Automata Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-[#0E1424] border border-[#1F2A4A] p-3 rounded-xl flex items-center space-x-3">
           <Layers className="w-5 h-5 text-[#7C5CFF]" />
           <div>
@@ -317,22 +285,6 @@ export const ExplorerPage: React.FC = () => {
           <div>
             <div className="text-[11px] text-[#8A94B2]">Alphabet Atoms</div>
             <div className="text-base font-bold text-[#E6EAF5]">{currentDfa.numAtoms}</div>
-          </div>
-        </div>
-        <div className="bg-[#0E1424] border border-[#1F2A4A] p-3 rounded-xl flex items-center space-x-3">
-          <Cpu className="w-5 h-5 text-[#FBBF24]" />
-          <div>
-            <div className="text-[11px] text-[#8A94B2]">Build Duration</div>
-            <div className="text-base font-bold text-[#E6EAF5]">{engine.stats.buildMs} ms</div>
-          </div>
-        </div>
-        <div className="bg-[#0E1424] border border-[#1F2A4A] p-3 rounded-xl flex items-center space-x-3">
-          <HardDrive className="w-5 h-5 text-[#F472B6]" />
-          <div>
-            <div className="text-[11px] text-[#8A94B2]">Table Memory</div>
-            <div className="text-base font-bold text-[#E6EAF5]">
-              {(currentDfa.table.byteLength / 1024).toFixed(1)} KB
-            </div>
           </div>
         </div>
         <div className="bg-[#0E1424] border border-[#1F2A4A] p-3 rounded-xl flex items-center space-x-3">
@@ -358,17 +310,15 @@ export const ExplorerPage: React.FC = () => {
           <div className="flex items-center space-x-1.5 overflow-x-auto text-xs">
             <span className="text-[#8A94B2] text-[11px]">Quick Tests:</span>
             {(selectedTarget === '2'
-              ? ['https://vit.ac.in', 'http://chat.io/api', 'ftp://bad']
+              ? ['https://vit.ac.in', 'http://chat.io/api']
               : selectedTarget === '3'
-              ? ['#VIT2026', '#compiler_lab', '#123']
+              ? ['#VIT2026', '#compiler_lab']
               : selectedTarget === '4'
-              ? ['@eldo', '@everyone', '@123']
+              ? ['@eldo', '@everyone']
               : selectedTarget === '8'
-              ? ['5:30pm', '12:45', '25:99']
+              ? ['5:30pm', '12:45']
               : selectedTarget === '9'
-              ? ['🔥', '👨‍💻', ':)']
-              : selectedTarget === 'toy-elongation'
-              ? ['aaabbc', 'aab', 'cccc']
+              ? ['🔥', '👨‍💻']
               : ['hey @eldo', 'https://vit.ac.in', '#VIT']
             ).map((sample) => (
               <button
@@ -500,13 +450,13 @@ export const ExplorerPage: React.FC = () => {
                 Initial State: q{currentDfa.start}
               </span>
             ) : activeSimStep.isDead ? (
-              <span className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 font-semibold animate-pulse">
+              <span className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30 font-semibold">
                 <XCircle className="w-3.5 h-3.5" />
                 <span>Dead State (Rejected / No Transition on &apos;{activeSimStep.char}&apos;)</span>
               </span>
             ) : (
               <div className="flex items-center space-x-2">
-                <span className="px-2 py-1 rounded-lg bg-[#141C33] text-[#22D3EE] border border-[#1F2A4A]">
+                <span className="px-2.5 py-1 rounded-lg bg-[#141C33] text-[#22D3EE] border border-[#1F2A4A]">
                   q{activeSimStep.fromState} &rarr; &apos;{activeSimStep.char}&apos; &rarr; q{activeSimStep.toState}
                 </span>
                 {activeSimStep.isAccept ? (
@@ -525,9 +475,9 @@ export const ExplorerPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main View Area: Graph or Matrix */}
+      {/* Main Split View: Graph / Matrix + State Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3 h-[560px]">
+        <div className="lg:col-span-3 min-h-[520px] h-[520px]">
           {viewMode === 'graph' ? (
             <DfaGraph
               dfa={currentDfa}

@@ -64,15 +64,12 @@ export const TracePlayer: React.FC = () => {
 
   // Find last accepting mark event before or at current event
   let lastMarkPos = -1;
-  let lastMarkRule = -1;
   for (let i = 0; i <= currentTraceEventIndex; i++) {
     const ev = trace[i]!;
     if (ev.t === 'begin') {
       lastMarkPos = -1;
-      lastMarkRule = -1;
     } else if (ev.t === 'mark') {
       lastMarkPos = ev.pos;
-      lastMarkRule = ev.ruleId;
     }
   }
 

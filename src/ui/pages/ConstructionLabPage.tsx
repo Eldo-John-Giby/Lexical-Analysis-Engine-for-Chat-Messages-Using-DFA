@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAppStore } from '../../state/store';
-import { parseRegex, RegexParseError } from '../../engine/regex/parser';
+import { parseRegex } from '../../engine/regex/parser';
 import { buildThompsonNFA } from '../../engine/nfa/thompson';
 import { subsetConstruction } from '../../engine/dfa/subset';
 import { minimizeMoore } from '../../engine/dfa/minimize-moore';
@@ -11,19 +10,12 @@ import { buildClassifierForAST } from '../../engine/charclass';
 import { prettyPrintRegex } from '../../engine/regex/pretty';
 import {
   GitBranch,
-  Play,
-  RotateCcw,
   CheckCircle,
   XCircle,
   AlertTriangle,
-  ChevronRight,
-  Info,
-  Layers,
 } from 'lucide-react';
 
 export const ConstructionLabPage: React.FC = () => {
-  const { engine } = useAppStore();
-
   const [regexInput, setRegexInput] = useState<string>('(a|b)*abb');
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [testString, setTestString] = useState<string>('ababb');
@@ -163,7 +155,7 @@ export const ConstructionLabPage: React.FC = () => {
                     Abstract Syntax Tree (AST) Representation
                   </h3>
                   <p className="text-xs text-[#8A94B2] mt-0.5">
-                    Recursive descent parser generated tree conforming to the grammar rules in Section 5.4.
+                    Recursive descent parser generated tree from the regular expression.
                   </p>
                 </div>
                 <span className="text-xs font-mono text-[#22D3EE] bg-[#141C33] px-2.5 py-1 rounded-lg border border-[#1F2A4A]">
